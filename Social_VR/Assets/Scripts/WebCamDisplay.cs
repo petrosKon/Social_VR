@@ -4,15 +4,18 @@ using UnityEngine;
 
 public class WebCamDisplay : MonoBehaviour, IWebCamDisplay
 {
+    [HideInInspector]
+    public WebCamTexture webCamTexture;
+
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
         AttachWebcamTexture();
     }
 
     public void AttachWebcamTexture()
     {
-        WebCamTexture webCamTexture = new WebCamTexture();
+        webCamTexture = new WebCamTexture();
         this.GetComponent<MeshRenderer>().material.mainTexture = webCamTexture;
         webCamTexture.Play();
     }

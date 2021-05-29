@@ -1,40 +1,50 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
-public class ScreenshotCapture : MonoBehaviour
+public class ScreenShotCapture : MonoBehaviour
 {
-    public GameObject screenshotQuad;
-    public RenderTexture cameraRenderTexture;
-    private Camera thisCamera;
 
-    // Start is called before the first frame update
-    void Start()
+    private Camera myCamera;
+    private static ScreenShotCapture instance;
+    private bool takeScreenShotFrame;
+    private void Awake()
     {
-        thisCamera = GetComponent<Camera>();
-        cameraRenderTexture = thisCamera.targetTexture;
+        instance = this;
+        myCamera = gameObject.GetComponent<Camera>();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void OnPostRender()
     {
-        if (OVRInput.GetDown(OVRInput.Button.One))
+        if (takeScreenShotFrame)
         {
-            StartCoroutine(TakeSnapshot());
+            takeScreenShotFrame = false;
+            RenderTexture renderTexture = myCamera.targetTexture;
+
+            Texture2D screenshot = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.ARGB32, false);
+            Rect rect = new Rect(0, 0, renderTexture.width, renderTexture.height);
+            screenshot.ReadPixels(rect, 0, 0);
+
+            byte[] byteArray = screenshot.EncodeToPNG();
+            System.IO.File.WriteAllBytes(Application.dataPath + "/Resources/zall.png", byteArray);
+            AssetDatabase.Refresh();
+
+
+
         }
     }
 
-    public IEnumerator TakeSnapshot()
+    private void TakeScreenshot(int width, int height)
     {
-        yield return new WaitForEndOfFrame();
-
-        thisCamera.Render();
-
-        Texture2D image = new Texture2D(cameraRenderTexture.width, cameraRenderTexture.height, TextureFormat.RGB24, true);
-        image.ReadPixels(new Rect(0, 0, cameraRenderTexture.width, cameraRenderTexture.height), 0, 0, false);
-        image.Apply();
-
-
-        screenshotQuad.GetComponent<Renderer>().material.mainTexture = image;
+        takeScreenShotFrame = true;
     }
+
+    public static void TakeScreenshot_static()
+    {
+        instance.TakeScreenshot(500, 500);
+    }
+
+
 }
